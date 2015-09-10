@@ -12,8 +12,8 @@ SET( GL_FRAMEWORK "GLFW" CACHE STRING "Which OpenGL windowing framework to use" 
 # Control linking to AntTweakBar and Sixense libraries by toggling a config flag.
 # @todo Write or find a "FindXXX.cmake" script to search typical install locations
 # on the build machine and link the libraries in.
-SET( USE_ANTTWEAKBAR TRUE CACHE BOOL "Use AntTweakBar" )
-SET( USE_SIXENSE TRUE CACHE BOOL "Use Sixense" )
+SET( USE_ANTTWEAKBAR FALSE CACHE BOOL "Use AntTweakBar" )
+SET( USE_SIXENSE FALSE CACHE BOOL "Use Sixense" )
 
 SET( USE_CORE_CONTEXT TRUE CACHE BOOL "Use Core Context" )
 IF( USE_CORE_CONTEXT )
@@ -28,7 +28,8 @@ IF( WIN32 )
     #
     # Custom Windows include and link dirs for my machine:
     #
-    SET( LIBS_HOME "C:/lib" CACHE STRING "Location of support libraries Glut, Glew and others"  )
+    #SET( LIBS_HOME "C:/lib" CACHE STRING "Location of support libraries Glut, Glew and others"  )
+    SET( LIBS_HOME "libraries" CACHE STRING "Location of support libraries Glut, Glew and others"  )
 
     SET( GLM_ROOT "${LIBS_HOME}/glm-0.9.5.4/glm" CACHE STRING "glm root" )
     INCLUDE_DIRECTORIES( "${GLM_ROOT}" )
@@ -58,7 +59,8 @@ IF( WIN32 )
         MESSAGE("Unknown GL_FRAMEWORK: choose GLFW or SDL.")
     ENDIF()
 
-    SET( GLEW_ROOT "${LIBS_HOME}/glew-1.12.0" CACHE STRING "glew root" )
+    #SET( GLEW_ROOT "${LIBS_HOME}/glew-1.12.0" CACHE STRING "glew root" )
+    SET( GLEW_ROOT "${LIBS_HOME}/glew" CACHE STRING "glew root" )
     INCLUDE_DIRECTORIES( "${GLEW_ROOT}/include" )
     LINK_DIRECTORIES   ( "${GLEW_ROOT}/lib/Release/Win32" )
     ADD_DEFINITIONS( -DGLEW_STATIC )
@@ -165,11 +167,12 @@ ELSEIF( APPLE )
 
     
 
-    SET( GLM_ROOT "${LIBS_HOME}/glm-0.9.5.4/glm" CACHE STRING "glm root" )
+    #SET( GLM_ROOT "${LIBS_HOME}/glm-0.9.5.4/glm" CACHE STRING "glm root" )
+    SET( GLM_ROOT "${LIBS_HOME}/glm" CACHE STRING "glm root" )
     INCLUDE_DIRECTORIES( "${GLM_ROOT}" )
     ADD_DEFINITIONS( -DGLM_FORCE_RADIANS )
 
-    SET( GLFW3_ROOT "${LIBS_HOME}/glfw-3.0.3/" )
+    SET( GLFW3_ROOT "${LIBS_HOME}/glfw/" )
     INCLUDE_DIRECTORIES( "${GLFW3_ROOT}/include" )
     LINK_DIRECTORIES   ( "${GLFW3_ROOT}/lib" )
 
