@@ -103,7 +103,8 @@ void AntPane::DrawPaneWithShader(
 
 void AntPane::timestep(double absTime, double dt)
 {
-    Pane::timestep(absTime, dt);
+    //Pane::timestep(absTime, dt);
+    Pane::timestep(dt);
 }
 
 void AntPane::OnMouseClick(int state, int, int)

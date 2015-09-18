@@ -73,6 +73,7 @@ protected:
 public:
     FBO m_paneRenderBuffer;
     bool m_cursorInPane;
+    bool m_visible;
     glm::vec2 m_pointerCoords;
 
     std::vector<glm::vec3> m_panePts;

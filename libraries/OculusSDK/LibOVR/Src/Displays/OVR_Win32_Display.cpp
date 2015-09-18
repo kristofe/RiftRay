@@ -920,7 +920,7 @@ static int discoverExtendedRifts(OVR::Win32::DisplayDesc* descriptorArray, int i
 				{
 					info.cbSize = sizeof(MONITORINFOEX);
 					GetMonitorInfo(monitors.Monitors[m], &info);
-					if (_tcsstr(ddm.DeviceName, info.szDevice) == ddm.DeviceName)
+					if (wcsstr(ddm.DeviceName, info.szDevice) == ddm.DeviceName)
 					{   // If the device name starts with the monitor name
 						// then we found the matching DISPLAY_DEVICE and MONITORINFO
 						// so we can gather the monitor coordinates

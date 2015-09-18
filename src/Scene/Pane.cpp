@@ -13,6 +13,7 @@ Pane::Pane()
 , m_paneRenderBuffer()
 , m_cursorInPane(false)
 , m_pointerCoords(0.0f)
+, m_visible(true)
 {
     m_panePts.push_back(glm::vec3(-0.5f, -0.5f, 0.0f));
     m_panePts.push_back(glm::vec3(0.5f, -0.5f, 0.0f));
