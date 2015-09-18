@@ -14,7 +14,7 @@ struct RenderingMode
         OVR_Client,
     };
 
-    RenderingMode() : outputType(Mono_Buffered) {}
+    RenderingMode() : outputType(Mono_Raw) {}
 
     outputType outputType;
 

@@ -17,24 +17,10 @@ vec3 getEyeDirection( vec2 uv, mat4 mvmtx )
 {
     float aspect = iResolution.x / iResolution.y;
 
-#ifdef USE_FULLDOME_PROJECTION
-    // Fulldome stereographic projection
-    // uv in [-1,1]
-    if (dot(uv,uv) > 1.)
-        discard;
-    float sumsq = uv.x*uv.x + uv.y*uv.y;
-    float denom = 1. + sumsq;
-    vec3 dir = vec3(
-        2.*uv.x/denom,
-        2.*uv.y/denom,
-        -1. + sumsq);
-#else
-    // Frustum perspective projection
     vec3 dir = vec3(
         uv.x * u_fov_y_scale*aspect,
         uv.y * u_fov_y_scale,
         -1.0);
-#endif
     dir *= mat3(mvmtx);
     return normalize(dir);
 }

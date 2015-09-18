@@ -14,10 +14,10 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <algorithm>
 
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
 
 #include <OVR_CAPI.h>
 #include "OVR.h"
@@ -33,12 +33,13 @@
 OVRScene::OVRScene()
 : m_basic()
 , m_pHmd(NULL)
+, m_pPos(NULL)
+, m_pYaw(NULL)
 , m_frustumVerts()
 , m_distanceToFrustum(999.0f)
 , m_tanFromCameraCenterline(0.0f, 0.0f)
 , m_tanHalfFov(1.0f, 1.0f)
 {
-    m_bChassisLocalSpace = true;
 }
 
 OVRScene::~OVRScene()
@@ -145,9 +146,7 @@ void OVRScene::DrawScene(
             );
         if (delta > 0.0f)
         {
-            const glm::vec3 red(1.f, 0.f, 0.f);
-            const glm::vec3 green(0.f, 1.f, 0.f);
-            const glm::vec4 col(glm::mix(green, red, 5.0f * delta), 1.f);
+            const glm::vec4 col(5.0f * delta, 0.0f, 0.0f, 1.0f);
             glUniform4fv(m_basic.GetUniLoc("u_Color"), 1, glm::value_ptr(col));
 
             _DrawFrustum();
@@ -159,10 +158,6 @@ void OVRScene::DrawScene(
 void OVRScene::RenderForOneEye(const float* pMview, const float* pPersp) const
 {
     if (m_bDraw == false)
-        return;
-    if (pMview == false)
-        return;
-    if (pPersp == false)
         return;
 
     const glm::mat4 modelview = glm::make_mat4(pMview);
@@ -177,6 +172,13 @@ void OVRScene::RenderForOneEye(const float* pMview, const float* pPersp) const
         const ovrPosef& cp = ts.CameraPose;
 
         OVR::Matrix4f camMtx = OVR::Matrix4f();
+
+        // Construct the matrix as the reverse of the one in RiftAppSkeleton::display_client
+        if (m_pPos != NULL)
+            camMtx *= OVR::Matrix4f::Translation(OVR::Vector3f(*m_pPos));
+        if (m_pYaw != NULL)
+            camMtx *= OVR::Matrix4f::RotationY(-*m_pYaw);
+
         camMtx *= OVR::Matrix4f::Translation(cp.Position)
             * OVR::Matrix4f(OVR::Quatf(cp.Orientation));
 
@@ -186,9 +188,8 @@ void OVRScene::RenderForOneEye(const float* pMview, const float* pPersp) const
     }
 }
 
-void OVRScene::timestep(double absTime, double dt)
+void OVRScene::timestep(float dt)
 {
-    (void)absTime;
     (void)dt;
 
     const ovrTrackingState ts = ovrHmd_GetTrackingState(m_pHmd, ovr_GetTimeInSeconds());

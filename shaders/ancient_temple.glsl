@@ -10,48 +10,13 @@
 
 // @var headSize 0.008
 // @var eyePos -0.0011595160 1.5994246 -5.0102816
-// @var vec3 lightdir 0 -0.3 -1
-// @var vec3 colamb .9 .85 1 color
-// @var vec3 coldiff 1. .9 .9 color
-// @var vec3 colspec 1 .9 .5 color
 
 const int Iterations=14;
 const float detail=.00002;
 const float Scale=2.;
 
-uniform vec3 lightdir; //=normalize(vec3(0.,-0.3,-1.));
-uniform vec3 colamb;
-uniform vec3 coldiff;
-uniform vec3 colspec;
+vec3 lightdir=normalize(vec3(0.,-0.3,-1.));
 
-// @var float tx 0.5 -1. 1. 0.001
-uniform float tx;
-// @var float ty 1.0 -1. 5. 0.001
-uniform float ty;
-// @var float tz 0.5 -1. 1. 0.001
-uniform float tz;
-
-// @var float clmin 0.4 -1. 1. 0.001
-uniform float clmin;
-// @var float clmax 1. -1. 2. 0.001
-uniform float clmax;
-
-
-// @var float px 0.0 -1. 1. 0.001
-uniform float px;
-// @var float py 2.0 -1. 5. 0.001
-uniform float py;
-// @var float pz 0.0 -1. 1. 0.001
-uniform float pz;
-
-
-// @var float mx 0.0 -1. 1. 0.001
-uniform float mx;
-// @var float mz 0.0 -1. 1. 0.001
-uniform float mz;
-
-
-vec3 ptx = vec3(tx, ty, tz);
 
 float ot=0.;
 float det=0.;
@@ -65,14 +30,13 @@ float de(vec3 pos) {
 	float DEfactor=1.;
 	ot=1000.;
 	for (int i=0; i<Iterations; i++) {
-		p = abs(p)-vec3(px,py,pz);  
+		p = abs(p)-vec3(0.,2.,0.);  
 		float r2 = dot(p, p);
 		ot = min(ot,abs(length(p)));
-		float clm = clmax + mx*floor(pos.x) + mz*floor(pos.z);
-		float sc=Scale/clamp(r2,clmin,clm);
+		float sc=Scale/clamp(r2,0.4,1.);
 		p*=sc; 
 		DEfactor*=sc;
-		p = p - ptx;
+		p = p - vec3(0.5,1.,0.5);
 	}
 	float fl=pos.y-3.013;
 	float d=min(fl,length(p)/DEfactor-.0005);
@@ -147,7 +111,7 @@ vec3 light(in vec3 p, in vec3 dir) {
 	float spec=pow(max(0.,dot(dir,-r))*sh,10.)*(.5+ao*.5);
 	float k=kset(p)*.18; 
 	vec3 col=mix(vec3(k*1.1,k*k*1.3,k*k*k),vec3(k),.45)*2.;
-	col=col*ao*(amb*colamb+diff*coldiff)+spec*colspec*.7;	
+	col=col*ao*(amb*vec3(.9,.85,1.)+diff*vec3(1.,.9,.9))+spec*vec3(1,.9,.5)*.7;	
 	return col;
 }
 
@@ -155,6 +119,7 @@ vec3 light(in vec3 p, in vec3 dir) {
 vec3 raymarch(in vec3 from, in vec3 dir) 
 {
 	float t=iGlobalTime;
+	vec2 lig=vec2(sin(t*2.)*.6,cos(t)*.25-.25);
 	float fog,glow,d=1., totdist=glow=fog=0.;
 	vec3 p, col=vec3(0.);
 	float ref=0.;

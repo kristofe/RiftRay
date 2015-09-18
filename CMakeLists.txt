@@ -20,128 +20,203 @@ IF( USE_CORE_CONTEXT )
     ADD_DEFINITIONS(-DUSE_CORE_CONTEXT)
 ENDIF()
 
+###############################################################################
+#
+# Oculus VR SDK dependency 
+#
+set(OVR_DIR ${CMAKE_SOURCE_DIR}/libraries/OculusSDK/LibOVR)
+# Check for the existence of the LibOVR project.  If it's missing, the 
+# submodule probably hasn't been checked out.
+if (NOT(EXISTS ${OVR_DIR} AND IS_DIRECTORY ${OVR_DIR}))
+    message(FATAL_ERROR "Submodules seem to be missing.  Please make sure you check out with 'git clone --recursive' OR run 'git submodule init' and 'git submodule update' after checkout") 
+endif()
+
+# The primary SDK artifact, a static library for Oculus access 
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(libraries/OculusSDK/LibOVR)
+include_directories(${CMAKE_SOURCE_DIR}/libraries/OculusSDK/LibOVR/Include)
+include_directories(${CMAKE_SOURCE_DIR}/libraries/OculusSDK/LibOVRKernel/Src)
+set(BUILD_SHARED_LIBS OFF)
+set_target_properties(OculusVR PROPERTIES FOLDER "3rdparty")
+list(APPEND PLATFORM_LIBS OculusVR)
+
+
+###############################################################################
+#
+# Non-Oculus third party dependencies 
+#
+
+# GLEW - Cross platform access to OpenGL 3+ functionality
+add_definitions(-DGLEW_STATIC)
+add_subdirectory(libraries/glew)
+set_target_properties(glew PROPERTIES FOLDER "3rdparty")
+list(APPEND PLATFORM_LIBS glew)
+
+# GLFW - Cross platform OpenGL window creation and input handling
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Build the GLFW example programs")
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "Build the GLFW test programs")
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "Build the GLFW documentation")
+set(GLFW_INSTALL OFF CACHE BOOL "Generate installation target")
+add_subdirectory(libraries/glfw)
+set_target_properties(glfw PROPERTIES FOLDER "3rdparty")
+list(APPEND PLATFORM_LIBS glfw ${GLFW_LIBRARIES})
+MESSAGE(GLFW LIBRARIES)
+MESSAGE(${GLFW_LIBRARIES})
+
+find_package(Threads)
+list(APPEND PLATFORM_LIBS ${CMAKE_THREAD_LIBS_INIT} )
+
+include_directories(${CMAKE_SOURCE_DIR}/libraries/glfw/include)
+include_directories(${CMAKE_SOURCE_DIR}/libraries/glew/include)
+
+###############################################################################
+#
+# GLM - Vector / matrix header only math library based on the syntax of GLSL
+#
+# It's cleverly puts all it's compiler and C++ feature  detection code into a
+# header that switches based on what compiler is being used (based on predefined 
+# macros).  Why can't everyone do that?
+#include_directories(${CMAKE_SOURCE_DIR}/libraries/glm)
+include_directories(libraries/glm)
+add_definitions( -DGLM_FORCE_RADIANS )
+
+###############################################################################
+#
+# Oculus C API 
+#
+# This provides all the access we need to the Oculus SDK.  For some strange 
+# reason the header files are in LibOVR/Src instead of LibOVR/Include.  
+#
+include_directories(${CMAKE_SOURCE_DIR}/libraries/OculusSDK/LibOVR/Src)
+
+
+
+
+
 #
 # Platform-dependent section
 #
 IF( WIN32 )
     MESSAGE(STATUS "MSVC_VERSION=${MSVC_VERSION}")
+    add_definitions( -DUNICODE )
     #
     # Custom Windows include and link dirs for my machine:
     #
     #SET( LIBS_HOME "C:/lib" CACHE STRING "Location of support libraries Glut, Glew and others"  )
-    SET( LIBS_HOME "libraries" CACHE STRING "Location of support libraries Glut, Glew and others"  )
-
-    SET( GLM_ROOT "${LIBS_HOME}/glm-0.9.5.4/glm" CACHE STRING "glm root" )
-    INCLUDE_DIRECTORIES( "${GLM_ROOT}" )
-    ADD_DEFINITIONS( -DGLM_FORCE_RADIANS )
-
-    IF( GL_FRAMEWORK STREQUAL "GLFW" )
-        MESSAGE("Using GLFW Framework.")
-        IF( MSVC_VERSION STREQUAL "1600" ) # VS 2010
-            SET( GLFW3_ROOT "${LIBS_HOME}/glfw-3.1.bin.WIN32" CACHE STRING "glfw root" )
-            LINK_DIRECTORIES( "${GLFW3_ROOT}/lib-vc2010" )
-        ELSEIF( MSVC_VERSION STREQUAL "1700" )
-            SET( GLFW3_ROOT "${LIBS_HOME}/glfw-3.1.bin.WIN32" CACHE STRING "glfw root" )
-            LINK_DIRECTORIES( "${GLFW3_ROOT}/lib-vc2012" )
-        ELSEIF( MSVC_VERSION STREQUAL "1800" )
-            SET( GLFW3_ROOT "${LIBS_HOME}/glfw-3.1.bin.WIN32" CACHE STRING "glfw root" )
-            LINK_DIRECTORIES( "${GLFW3_ROOT}/lib-vc2013" )
-        ENDIF()
-        INCLUDE_DIRECTORIES( "${GLFW3_ROOT}/include" )
-        SET( FRAMEWORK_LIBS glfw3.lib )
-    ELSEIF( GL_FRAMEWORK STREQUAL "SDL" )
-        MESSAGE("Using SDL2 Framework.")
-        SET( SDL2_ROOT "${LIBS_HOME}/SDL2-2.0.3" CACHE STRING "SDL2 root" )
-        INCLUDE_DIRECTORIES( "${SDL2_ROOT}/include" )
-        LINK_DIRECTORIES   ( "${SDL2_ROOT}/lib/x86" )
-        SET( FRAMEWORK_LIBS SDL2.lib )
-    ELSE()
-        MESSAGE("Unknown GL_FRAMEWORK: choose GLFW or SDL.")
-    ENDIF()
-
-    #SET( GLEW_ROOT "${LIBS_HOME}/glew-1.12.0" CACHE STRING "glew root" )
-    SET( GLEW_ROOT "${LIBS_HOME}/glew" CACHE STRING "glew root" )
-    INCLUDE_DIRECTORIES( "${GLEW_ROOT}/include" )
-    LINK_DIRECTORIES   ( "${GLEW_ROOT}/lib/Release/Win32" )
-    ADD_DEFINITIONS( -DGLEW_STATIC )
-
-    SET( OCULUSSDK_ROOT "${LIBS_HOME}/OculusSDK" CACHE STRING "OculusSDK root" )
-    INCLUDE_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Include" )
-    INCLUDE_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Src" )
-    INCLUDE_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVRKernel/Src" )
-    IF( MSVC_VERSION STREQUAL "1600" )
-        IF( DEBUG )
-            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Debug/VS2010" )
-        ELSE()
-            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Release/VS2010" )
-        ENDIF()
-    ELSEIF( MSVC_VERSION STREQUAL "1700" )
-        IF( DEBUG )
-            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Debug/VS2012" )
-        ELSE()
-            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Release/VS2012" )
-        ENDIF()
-    ELSEIF( MSVC_VERSION STREQUAL "1800" )
-        IF( DEBUG )
-            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Debug/VS2013" )
-        ELSE()
-            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Release/VS2013" )
-        ENDIF()
-    ENDIF()
-    SET( OVR_LIBS LibOVR.lib )
-
-    IF( USE_SIXENSE )
-        MESSAGE("Using Sixense SDK.")
-        SET( SIXENSE_ROOT "${LIBS_HOME}/SixenseSDK" CACHE STRING "SixenseSDK root" )
-        INCLUDE_DIRECTORIES( "${SIXENSE_ROOT}/include" )
-        #LINK_DIRECTORIES   ( "${SIXENSE_ROOT}/lib/win32/debug_static" )
-        LINK_DIRECTORIES   ( "${SIXENSE_ROOT}/lib/win32/debug_dll"
-                             "${SIXENSE_ROOT}/lib/win32/release_dll" )
-        SET( HYDRA_LIBS
-            optimized sixense.lib
-            optimized sixense_utils.lib
-            debug sixensed.lib
-            debug sixense_utilsd.lib )
-        ADD_DEFINITIONS( -DUSE_SIXENSE )
-    ENDIF( USE_SIXENSE )
-
-    IF( USE_ANTTWEAKBAR )
-        MESSAGE("Using AntTweakBar.")
-        SET( ANTTWEAKBAR_ROOT "${LIBS_HOME}/AntTweakBar_116/AntTweakBar" CACHE STRING "AntTweakBar root" )
-        INCLUDE_DIRECTORIES( "${ANTTWEAKBAR_ROOT}/include" )
-        LINK_DIRECTORIES   ( "${ANTTWEAKBAR_ROOT}/lib" )
-        SET( ANT_LIBS AntTweakBar.lib )
-        ADD_DEFINITIONS( -DUSE_ANTTWEAKBAR )
-    ENDIF( USE_ANTTWEAKBAR )
-
-    SET( PLATFORM_LIBS
-        ${FRAMEWORK_LIBS}
-        opengl32.lib glu32.lib glew32s.lib
-        ${OVR_LIBS}
-        Winmm.lib
-        ws2_32.lib
-        ${HYDRA_LIBS}
-        ${ANT_LIBS}
-        )
-
-    ADD_DEFINITIONS( /W4 )
-
-    # These lines will silence some linker warnings on VS2010,
-    # but also remove debug info from the debug build.
-    #SET( CMAKE_EXE_LINKER_FLAGS /NODEFAULTLIB:\"libcmt.lib\" )
-    #SET( CMAKE_EXE_LINKER_FLAGS_DEBUG /NODEFAULTLIB:\"msvcrt.lib\" )
-
-    # Copy DLLs of the included libraries into output directories.
-    INVOKEPYTHON( "tools/copyDLLs.py"
-        ${PROJECT_SOURCE_DIR}
-        ${PROJECT_BINARY_DIR}
-        "ANTTWEAKBAR_ROOT=${ANTTWEAKBAR_ROOT}"
-        "OCULUSSDK_ROOT=${OCULUSSDK_ROOT}"
-        "SIXENSE_ROOT=${SIXENSE_ROOT}"
-        "GLEW_ROOT=${GLEW_ROOT}"
-        "SDL2_ROOT=${SDL2_ROOT}"
-        "SFML_ROOT=${SFML_ROOT}"
-        )
+#    SET( LIBS_HOME "${CMAKE_CURRENT_SOURCE_DIR}/libraries" CACHE STRING "Location of support libraries Glut, Glew and others"  )
+#
+#    SET( GLM_ROOT "${LIBS_HOME}/glm-0.9.5.4/glm" CACHE STRING "glm root" )
+#    INCLUDE_DIRECTORIES( "${GLM_ROOT}" )
+#    ADD_DEFINITIONS( -DGLM_FORCE_RADIANS )
+#
+#    IF( GL_FRAMEWORK STREQUAL "GLFW" )
+#        MESSAGE("Using GLFW Framework.")
+#        IF( MSVC_VERSION STREQUAL "1600" ) # VS 2010
+#            SET( GLFW3_ROOT "${LIBS_HOME}/glfw-3.1.bin.WIN32" CACHE STRING "glfw root" )
+#            LINK_DIRECTORIES( "${GLFW3_ROOT}/lib-vc2010" )
+#        ELSEIF( MSVC_VERSION STREQUAL "1700" )
+#            SET( GLFW3_ROOT "${LIBS_HOME}/glfw-3.1.bin.WIN32" CACHE STRING "glfw root" )
+#            LINK_DIRECTORIES( "${GLFW3_ROOT}/lib-vc2012" )
+#        ELSEIF( MSVC_VERSION STREQUAL "1800" )
+#            SET( GLFW3_ROOT "${LIBS_HOME}/glfw-3.1.bin.WIN32" CACHE STRING "glfw root" )
+#            LINK_DIRECTORIES( "${GLFW3_ROOT}/lib-vc2013" )
+#        ENDIF()
+#        INCLUDE_DIRECTORIES( "${GLFW3_ROOT}/include" )
+#        SET( FRAMEWORK_LIBS glfw3.lib )
+#    ELSEIF( GL_FRAMEWORK STREQUAL "SDL" )
+#        MESSAGE("Using SDL2 Framework.")
+#        SET( SDL2_ROOT "${LIBS_HOME}/SDL2-2.0.3" CACHE STRING "SDL2 root" )
+#        INCLUDE_DIRECTORIES( "${SDL2_ROOT}/include" )
+#        LINK_DIRECTORIES   ( "${SDL2_ROOT}/lib/x86" )
+#        SET( FRAMEWORK_LIBS SDL2.lib )
+#    ELSE()
+#        MESSAGE("Unknown GL_FRAMEWORK: choose GLFW or SDL.")
+#    ENDIF()
+#
+#    #SET( GLEW_ROOT "${LIBS_HOME}/glew-1.12.0" CACHE STRING "glew root" )
+#    SET( GLEW_ROOT "${LIBS_HOME}/glew" CACHE STRING "glew root" )
+#    INCLUDE_DIRECTORIES( "${GLEW_ROOT}/include" )
+#    LINK_DIRECTORIES   ( "${GLEW_ROOT}/lib/Release/Win32" )
+#    ADD_DEFINITIONS( -DGLEW_STATIC )
+#
+#    SET( OCULUSSDK_ROOT "${LIBS_HOME}/OculusSDK" CACHE STRING "OculusSDK root" )
+#    INCLUDE_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Include" )
+#    INCLUDE_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Src" )
+#    INCLUDE_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVRKernel/Src" )
+#    IF( MSVC_VERSION STREQUAL "1600" )
+#        IF( DEBUG )
+#            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Debug/VS2010" )
+#        ELSE()
+#            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Release/VS2010" )
+#        ENDIF()
+#    ELSEIF( MSVC_VERSION STREQUAL "1700" )
+#        IF( DEBUG )
+#            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Debug/VS2012" )
+#        ELSE()
+#            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Release/VS2012" )
+#        ENDIF()
+#    ELSEIF( MSVC_VERSION STREQUAL "1800" )
+#        IF( DEBUG )
+#            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Debug/VS2013" )
+#        ELSE()
+#            LINK_DIRECTORIES( "${OCULUSSDK_ROOT}/LibOVR/Lib/Windows/Win32/Release/VS2013" )
+#        ENDIF()
+#    ENDIF()
+#    SET( OVR_LIBS LibOVR.lib )
+#
+#    IF( USE_SIXENSE )
+#        MESSAGE("Using Sixense SDK.")
+#        SET( SIXENSE_ROOT "${LIBS_HOME}/SixenseSDK" CACHE STRING "SixenseSDK root" )
+#        INCLUDE_DIRECTORIES( "${SIXENSE_ROOT}/include" )
+#        #LINK_DIRECTORIES   ( "${SIXENSE_ROOT}/lib/win32/debug_static" )
+#        LINK_DIRECTORIES   ( "${SIXENSE_ROOT}/lib/win32/debug_dll"
+#                             "${SIXENSE_ROOT}/lib/win32/release_dll" )
+#        SET( HYDRA_LIBS
+#            optimized sixense.lib
+#            optimized sixense_utils.lib
+#            debug sixensed.lib
+#            debug sixense_utilsd.lib )
+#        ADD_DEFINITIONS( -DUSE_SIXENSE )
+#    ENDIF( USE_SIXENSE )
+#
+#    IF( USE_ANTTWEAKBAR )
+#        MESSAGE("Using AntTweakBar.")
+#        SET( ANTTWEAKBAR_ROOT "${LIBS_HOME}/AntTweakBar_116/AntTweakBar" CACHE STRING "AntTweakBar root" )
+#        INCLUDE_DIRECTORIES( "${ANTTWEAKBAR_ROOT}/include" )
+#        LINK_DIRECTORIES   ( "${ANTTWEAKBAR_ROOT}/lib" )
+#        SET( ANT_LIBS AntTweakBar.lib )
+#        ADD_DEFINITIONS( -DUSE_ANTTWEAKBAR )
+#    ENDIF( USE_ANTTWEAKBAR )
+#
+#    SET( PLATFORM_LIBS
+#        ${FRAMEWORK_LIBS}
+#        opengl32.lib glu32.lib glew32s.lib
+#        ${OVR_LIBS}
+#        Winmm.lib
+#        ws2_32.lib
+#        ${HYDRA_LIBS}
+#        ${ANT_LIBS}
+#        )
+#
+#    ADD_DEFINITIONS( /W4 )
+#
+#    # These lines will silence some linker warnings on VS2010,
+#    # but also remove debug info from the debug build.
+#    #SET( CMAKE_EXE_LINKER_FLAGS /NODEFAULTLIB:\"libcmt.lib\" )
+#    #SET( CMAKE_EXE_LINKER_FLAGS_DEBUG /NODEFAULTLIB:\"msvcrt.lib\" )
+#
+#Got rid of copying these dll's as the projects will be integrated and built by this one
+#    # Copy DLLs of the included libraries into output directories.
+#    #INVOKEPYTHON( "tools/copyDLLs.py"
+#     #   ${PROJECT_SOURCE_DIR}
+#     #   ${PROJECT_BINARY_DIR}
+#     #   "ANTTWEAKBAR_ROOT=${ANTTWEAKBAR_ROOT}"
+#     #   "OCULUSSDK_ROOT=${OCULUSSDK_ROOT}"
+#     #   "SIXENSE_ROOT=${SIXENSE_ROOT}"
+#     #   "GLEW_ROOT=${GLEW_ROOT}"
+#     #   "SDL2_ROOT=${SDL2_ROOT}"
+#     #   "SFML_ROOT=${SFML_ROOT}"
+#     #   )
 ELSEIF( APPLE )
     ADD_DEFINITIONS( -D_MACOS )
 

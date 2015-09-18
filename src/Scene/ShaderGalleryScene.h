@@ -9,13 +9,11 @@
 #endif
 
 #include "PaneScene.h"
-#include "VirtualTrackball.h"
-#include "ShaderToy.h"
-#include "ShaderToyFunctions.h"
-#include "ShaderToyGlobalState.h"
 
-class Pane;
-class ShaderToyPane;
+#include "Pane.h"
+#include "VirtualTrackball.h"
+
+class ShaderToy;
 
 ///@brief 
 class ShaderGalleryScene : public PaneScene
@@ -24,32 +22,9 @@ public:
     ShaderGalleryScene();
     virtual ~ShaderGalleryScene();
 
-    virtual void RenderForOneEye(const float* pMview, const float* pPersp) const;
-
-    virtual void CompileShaders();
-    virtual void RenderThumbnails() const;
-
-    virtual Pane* AddShaderToyPane(ShaderToy* pSt);
+    virtual Pane* AddShaderPane(ShaderToy* pSt);
     virtual void RearrangePanes();
-    virtual void ResetTimer() { if(m_pActiveShaderToy) m_pActiveShaderToy->ResetTimer(); }
-
-    virtual void SetTextureLibraryPointer(std::map<std::string, textureChannel>* pTL) { m_pTexLibrary = pTL; }
-    virtual void SetActiveShaderToy(ShaderToy* pSt) { m_pActiveShaderToy = pSt; }
-    virtual void SetActiveShaderToyPane(ShaderToyPane* pP) { m_pActiveShaderToyPane = pP; }
-
-    virtual const ShaderToyPane* GetFocusedPane() const;
-    virtual const ShaderToy* GetActiveShaderToy() const { return m_pActiveShaderToy; }
-    virtual const ShaderToyPane* GetActiveShaderToyPane() const { return m_pActiveShaderToyPane; }
-
-protected:
-    ShaderToy* m_pActiveShaderToy;
-    ShaderToyPane* m_pActiveShaderToyPane;
-    std::map<std::string, textureChannel>* m_pTexLibrary;
-
-public:
-    unsigned int m_paneDimensionPixels;
-    ShaderToyGlobalState m_globalShadertoyState;
-    bool m_useFulldome;
+    virtual ShaderToy* GetFocusedShader() const;
 
 private: // Disallow copy ctor and assignment operator
     ShaderGalleryScene(const ShaderGalleryScene&);

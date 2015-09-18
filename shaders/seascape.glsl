@@ -5,20 +5,7 @@
 // @var license CC BY-NC-SA 3.0
 // @var url https://www.shadertoy.com/view/Ms2SD1
 // @var headSize 1.0
-// @var eyePos 0.0 3.0 0.0
-
-// initial min max increment
-// @var float SEA_HEIGHT 0.6 0.0 2.0 0.01
-// @var float SEA_CHOPPY 4.0 0.0 10.0 0.04
-// @var float SEA_SPEED 0.8 0.0 10.0 0.1
-// @var float SEA_FREQ 0.16 0.0 1.0 0.005
-// @var vec3 SEA_WATER_COLOR 0.8 0.9 0.6 color
-
-uniform float SEA_HEIGHT; // = 0.6;
-uniform float SEA_CHOPPY; // = 4.0;
-uniform float SEA_SPEED; // = 0.8;
-uniform float SEA_FREQ; // = 0.16;
-uniform vec3 SEA_WATER_COLOR; // = vec3(0.8,0.9,0.6);
+// @var eyePos 0.0 7.0 0.0
 
 const int NUM_STEPS = 8;
 const float PI	 	= 3.1415;
@@ -28,7 +15,12 @@ float EPSILON_NRM	= 0.1 / iResolution.x;
 // sea
 const int ITER_GEOMETRY = 3;
 const int ITER_FRAGMENT = 5;
+const float SEA_HEIGHT = 0.6;
+const float SEA_CHOPPY = 4.0;
+const float SEA_SPEED = 0.8;
+const float SEA_FREQ = 0.16;
 const vec3 SEA_BASE = vec3(0.1,0.19,0.22);
+const vec3 SEA_WATER_COLOR = vec3(0.8,0.9,0.6);
 float SEA_TIME = iGlobalTime * SEA_SPEED;
 mat2 octave_m = mat2(1.6,1.2,-1.2,1.6);
 

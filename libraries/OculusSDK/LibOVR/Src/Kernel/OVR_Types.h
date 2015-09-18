@@ -355,7 +355,6 @@ struct OVR_GUID
 #define OVR_LITTLE_ENDIAN       1
 #define OVR_BIG_ENDIAN          2
 
-
 #if defined(OVR_OS_MS)
     
     // ***** Windows and non-desktop platforms

@@ -1,4 +1,4 @@
-project (OculusVR)
+﻿project (OculusVR)
 
 include_directories(Include Src Src/Kernel Src/Util)
 include_directories(../3rdParty/glext)
@@ -89,7 +89,7 @@ else()
 
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DOVR_BUILD_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DOVR_BUILD_DEBUG -DUNICODE")
 add_library(OculusVR ${SOURCE_FILES} ${PLATFORM_SOURCE_FILES})
 target_link_libraries(OculusVR ${EXTRA_LIBS})
 set(OVR_LIBRARIES ${EXTRA_LIBS} CACHE STRING "Dependencies of OculusVR")

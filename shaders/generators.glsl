@@ -15,26 +15,12 @@
 // following a liquid metal ball. 
 
 // @var title Generators
-// @var url https://www.shadertoy.com/view/Xtf3Rn
+// @var url https://www.shadertoy.com/view/lsXGWl
 // @var author Kali
 // @var license CC BY-NC-SA 3.0
 
 // @var headSize 0.01
 // @var eyePos 0.012978639 3.0377416 -3.9262636
-
-// @var vec3 ENERGY_COLOR 1. .7 .4 color
-// @var float vibrateSpeed 60. 1. 600 1.
-// @var float vibrateAmpl 0.0013 0.0 0.05 0.0001
-
-#ifdef RIFTRAY
-uniform vec3 ENERGY_COLOR;
-uniform float vibrateSpeed;
-uniform float vibrateAmpl;
-#else
-vec3 ENERGY_COLOR = vec3(1.,.7,.4);
-float vibrateSpeed = 60.;
-float vibrateAmpl = .0013;
-#endif
 
 #define ENABLE_HARD_SHADOWS // turn off to enable faster AO soft shadows 
 #define ENABLE_VIBRATION
@@ -46,6 +32,7 @@ float vibrateAmpl = .0013;
 #define LIGHT_COLOR vec3(.85,.9,1.)
 #define AMBIENT_COLOR vec3(.8,.83,1.)
 #define FLOOR_COLOR vec3(1.,.7,.9)
+#define ENERGY_COLOR vec3(1.,.7,.4)
 #define BRIGHTNESS .9
 #define GAMMA 1.3
 #define SATURATION .85
@@ -61,7 +48,7 @@ vec3 ambdir=normalize(vec3(0.,0.,1.));
 const vec3 origin=vec3(0.,3.11,0.);
 vec3 energy=vec3(0.01);
 #ifdef ENABLE_VIBRATION
-float vibration=sin(iGlobalTime*vibrateSpeed)*vibrateAmpl;
+float vibration=sin(iGlobalTime*60.)*.0013;
 #else
 float vibration=0.;
 #endif

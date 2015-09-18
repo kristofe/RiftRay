@@ -19,24 +19,6 @@
 
 class BMFont;
 
-struct holdingState
-{
-    bool m_holding;
-    float m_holdingTPoint;
-    glm::vec3 m_holdingPoint3;
-    glm::vec3 m_holdingPosAtClick;
-    int m_holdingDevice; ///@todo Use an enum
-
-    holdingState()
-        : m_holding(false)
-        , m_holdingTPoint(0.f)
-        , m_holdingPoint3(glm::vec3(0.f))
-        , m_holdingPosAtClick(glm::vec3(0.f))
-        , m_holdingDevice(-1)
-    {
-    }
-};
-
 ///@brief 
 class Pane
 {
@@ -45,7 +27,7 @@ public:
     virtual ~Pane();
 
     virtual void initGL();
-    virtual void timestep(double, double) {}
+    virtual void timestep(float) {}
 
     virtual void OnMouseClick(int, int, int) {}
     virtual void OnMouseMove(int, int) {}
@@ -61,16 +43,13 @@ public:
 
     virtual glm::ivec2 GetFBOSize() const { return glm::ivec2(m_paneRenderBuffer.w, m_paneRenderBuffer.h); }
     virtual std::vector<glm::vec3> GetTransformedPanePoints() const;
-    virtual bool GetPaneRayIntersectionCoordinates(
-        glm::vec3 origin3, glm::vec3 dir3,
-        glm::vec2& planePtOut, float& tParamOut);
+    virtual bool GetPaneRayIntersectionCoordinates(glm::vec3 origin3, glm::vec3 dir3, glm::vec2& planePt);
 
     virtual void DrawPane() const;
     virtual void DrawPaneWithShader(
-        const glm::mat4&, // modelview
-        const glm::mat4&, // projection
-        const ShaderWithVariables&
-        ) const {}
+        const glm::mat4& modelview,
+        const glm::mat4& projection,
+        const ShaderWithVariables& sh) const {}
     virtual void DrawCursor() const;
     virtual void DrawTextOverlay(
         const std::string text,
@@ -83,8 +62,8 @@ public:
         const glm::mat4& modelview,
         const glm::mat4& projection,
         const glm::mat4& object) const;
-
 protected:
+
     virtual void _InitPointerAttributes();
     virtual void _InitPlaneAttributes();
 
@@ -95,12 +74,9 @@ public:
     FBO m_paneRenderBuffer;
     bool m_cursorInPane;
     glm::vec2 m_pointerCoords;
-    holdingState m_holdState;
 
     std::vector<glm::vec3> m_panePts;
     Transformation m_tx;
-    bool m_acceptMouseMotion;
-    bool m_visible;
 
 private: // Disallow copy ctor and assignment operator
     Pane(const Pane&);

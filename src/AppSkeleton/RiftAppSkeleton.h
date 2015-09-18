@@ -12,7 +12,6 @@
 #  include <windows.h>
 #endif
 
-#include <Kernel/OVR_Types.h> // Pull in OVR_OS_* defines
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
 
@@ -21,14 +20,14 @@
 #endif
 
 #include "FBO.h"
+#include "Scene.h"
 #ifdef USE_SIXENSE
 #include "HydraScene.h"
 #endif
 #include "OVRScene.h"
 #include "RaymarchShaderScene.h"
+#include "ShaderToyScene.h"
 #include "ShaderGalleryScene.h"
-#include "FloorScene.h"
-#include "DashboardScene.h"
 
 #include "FlyingMouse.h"
 #include "VirtualTrackball.h"
@@ -45,38 +44,48 @@ public:
     void initHMD();
     void initVR();
     void exitVR();
+
     void RecenterPose();
-    void ResetChassisTransformations();
-    void SetChassisPosition(glm::vec3 p) { m_chassisPos = p; }
-    int ConfigureRendering();
+    void ResetAllTransformations();
+    void SetChassisPosition(ovrVector3f p) { m_chassisPos = p; }
+    ovrSizei getHmdResolution() const;
+    ovrVector2i getHmdWindowPos() const;
+    GLuint getRenderBufferTex() const { return m_renderBuffer.tex; }
+    float GetFboScale() const { return m_fboScale; }
+    bool UsingDebugHmd() const { return m_usingDebugHmd; }
+    bool UsingDirectMode() const { return m_directHmdMode; }
+    void AttachToWindow(void* pWindow) { ovrHmd_AttachToWindow(m_Hmd, pWindow, NULL, NULL); }
+
     int ConfigureSDKRendering();
     int ConfigureClientRendering();
+
+#if defined(OVR_OS_WIN32)
+    void setWindow(HWND w) { m_Cfg.OGL.Window = w; }
+#elif defined(OVR_OS_LINUX)
+    void setWindow(Window Win, Display* Disp)
+    {
+        m_Cfg.OGL.Win = Win;
+        m_Cfg.OGL.Disp = Disp;
+    }
+#endif
+
     void DismissHealthAndSafetyWarning() const;
     bool CheckForTapOnHmd();
 
-    void DoSceneRenderPrePasses() const;
     void display_raw() const;
     void display_buffered(bool setViewport=true) const;
     void display_stereo_undistorted() const;
     void display_sdk() const;
     void display_client() const;
+    void timestep(float dt);
 
-    // Direct mode and SDK rendering hooks
-    void AttachToWindow(void* pWindow) { ovrHmd_AttachToWindow(m_Hmd, pWindow, NULL, NULL); }
-#if defined(OVR_OS_WIN32)
-    void setWindow(HWND w) { m_Cfg.OGL.Window = w; }
-#elif defined(OVR_OS_LINUX)
-    void setWindow(_XDisplay* Disp) { m_Cfg.OGL.Disp = Disp; }
-#endif
-
-    void timestep(double absTime, double dt);
     void resize(int w, int h);
 
     void DiscoverShaders(bool recurse=true);
-    void SetTextureLibraryPointer();
-    void LoadTextureLibrary();
+    void CompileShaders();
+    void RenderThumbnails();
+    void LoadTexturesFromFile();
     void ToggleShaderWorld();
-    void SaveShaderSettings();
 
     float GetFBOScale() const { return m_fboScale; }
     void SetFBOScale(float s);
@@ -84,52 +93,13 @@ public:
     float* GetFBOScalePointer() { return &m_fboScale; }
 #endif
 
-    GLuint getRenderBufferTex() const { return m_renderBuffer.tex; }
-    float GetFboScale() const { return m_fboScale; }
-    ovrSizei getHmdResolution() const;
-    ovrVector2i getHmdWindowPos() const;
-    bool UsingDebugHmd() const { return m_usingDebugHmd; }
-    bool UsingDirectMode() const { return m_directHmdMode; }
-
 protected:
     void _initPresentFbo();
     void _initPresentDistMesh(ShaderWithVariables& shader, int eyeIdx);
     void _resetGLState() const;
     void _drawSceneMono() const;
-    void _DrawScenes(
-        const float* pMview,
-        const float* pPersp,
-        const ovrRecti& rvp,
-        const float* pMvLocal) const;
-    void _CalculatePerEyeRenderParams(
-        const ovrPosef eyePoses[2],
-        const ovrPosef eyePosesScaled[2],
-        ovrPosef* renderPose,
-        ovrTexture* eyeTexture,
-        glm::mat4* eyeProjMatrix,
-        glm::mat4* eyeMvMtxLocal,
-        glm::mat4* eyeMvMtxWorld,
-        ovrRecti* renderVp) const;
-    void _RenderScenesToStereoBuffer(
-        const ovrHmd hmd,
-        const glm::mat4* eyeProjMatrix,
-        const glm::mat4* eyeMvMtxLocal,
-        const glm::mat4* eyeMvMtxWorld,
-        const ovrRecti* rvpFull) const;
-    void _RenderOnlyRaymarchSceneToStereoBuffer(
-        const ovrHmd hmd,
-        const glm::mat4* eyeProjMatrix,
-        const glm::mat4* eyeMvMtxWorld,
-        const ovrRecti* rvpFull) const;
-    void _RenderRaymarchSceneToCamBuffer() const;
-
+    void _DrawScenes(const float* pMview, const float* pPersp, const ovrRecti& rvp, const float* pScaledMview=NULL) const;
     void _StoreHmdPose(const ovrPosef& eyePose) const;
-    void _StretchBlitDownscaledBuffer() const;
-    void _ToggleShaderWorld();
-    void _SaveShaderSettings(const std::string toFilename);
-
-    virtual glm::mat4 makeWorldToEyeMatrix() const;
-    glm::mat4 makeWorldToChassisMatrix() const;
 
     ovrHmd m_Hmd;
     ovrFovPort m_EyeFov[2];
@@ -142,33 +112,27 @@ protected:
     // For client rendering
     ovrRecti m_RenderViewports[2];
     ovrDistortionMesh m_DistMeshes[2];
-    mutable ovrPosef m_eyePoseCached;
+    mutable ovrQuatf m_eyeOri;
 
     // For eye ray tracking - set during draw function
     mutable glm::vec3 m_hmdRo;
     mutable glm::vec3 m_hmdRd;
-    mutable glm::vec3 m_hmdRoLocal;
-    mutable glm::vec3 m_hmdRdLocal;
 
 public:
     // This public section is for exposing state variables to AntTweakBar
-    RaymarchShaderScene m_raymarchScene;
-    ShaderGalleryScene m_galleryScene;
-    OVRScene m_ovrScene;
-    DashboardScene m_dashScene;
-    FloorScene m_floorScene;
+    Scene m_scene;
 #ifdef USE_SIXENSE
     HydraScene m_hydraScene;
 #endif
+    OVRScene m_ovrScene;
+    RaymarchShaderScene m_raymarchScene;
+    ShaderToyScene m_shaderToyScene;
+    ShaderGalleryScene m_paneScene;
 
-    glm::vec3 m_chassisPos;
-    glm::vec3 m_chassisPosCached;
-    float m_chassisPitch;
-    float m_chassisRoll;
+    ovrVector3f m_chassisPos;
 
 protected:
     std::vector<IScene*> m_scenes;
-    FBO m_rwwttBuffer;
     FBO m_renderBuffer;
     float m_fboScale;
     ShaderWithVariables m_presentFbo;
@@ -176,14 +140,11 @@ protected:
     ShaderWithVariables m_presentDistMeshR;
 
     float m_chassisYaw;
-    float m_chassisYawCached;
 
     VirtualTrackball m_hyif;
+    std::vector<ShaderToy*> m_shaderToys;
     std::map<std::string, textureChannel> m_texLibrary;
     glm::ivec2 m_windowSize;
-
-    Timer m_transitionTimer;
-    int m_transitionState;
 
 public:
     float m_headSize;
@@ -194,14 +155,10 @@ public:
     float m_keyboardYaw;
     float m_joystickYaw;
     float m_mouseDeltaYaw;
-    float m_keyboardDeltaPitch;
-    float m_keyboardDeltaRoll;
-
     float m_cinemaScopeFactor;
     float m_fboMinScale;
 #ifdef USE_ANTTWEAKBAR
     TwBar* m_pTweakbar;
-    TwBar* m_pShaderTweakbar;
 #endif
 
 private: // Disallow copy ctor and assignment operator

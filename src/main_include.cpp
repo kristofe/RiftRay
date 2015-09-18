@@ -10,8 +10,8 @@ static void TW_CALL EnableVSyncCB(void*) { SetVsync(1); }
 static void TW_CALL DisableVSyncCB(void*) { SetVsync(0); }
 static void TW_CALL AdaptiveVSyncCB(void*) { SetVsync(-1); }
 static void TW_CALL RecenterPoseCB(void*) { g_app.RecenterPose(); }
-static void TW_CALL StandingCB(void*) { g_app.SetChassisPosition(glm::vec3(0.f, 1.78f, 2.f)); }
-static void TW_CALL SittingCB(void*) { g_app.SetChassisPosition(glm::vec3(0.f, 1.27f, 2.f)); }
+static void TW_CALL StandingCB(void*) { ovrVector3f p = {0,1.78f,2}; g_app.SetChassisPosition(p); }
+static void TW_CALL SittingCB(void*) { ovrVector3f p = {0,1.27f,2}; g_app.SetChassisPosition(p); }
 
 static void TW_CALL GetDisplayFPS(void* value, void*)
 {
@@ -20,7 +20,7 @@ static void TW_CALL GetDisplayFPS(void* value, void*)
 
 static void TW_CALL ResetTimerCB(void *clientData)
 {
-    static_cast<ShaderGalleryScene *>(clientData)->ResetTimer();
+    static_cast<ShaderToyScene *>(clientData)->ResetTimer();
 }
 
 void InitializeBar()
@@ -30,24 +30,20 @@ void InitializeBar()
 
     // Create a tweak bar
     g_pTweakbar = TwNewBar("TweakBar");
-    g_pShaderTweakbar = TwNewBar("ShaderTweakBar");
     g_app.m_pTweakbar = g_pTweakbar;
-    g_app.m_pShaderTweakbar = g_pShaderTweakbar;
 
     TwDefine(" GLOBAL fontsize=3 ");
-    TwDefine(" TweakBar size='300 580' ");
-    TwDefine(" TweakBar position='10 10' ");
-    TwDefine(" ShaderTweakBar size='300 420' ");
-    TwDefine(" ShaderTweakBar position='290 170' ");
+    TwDefine(" TweakBar size='300 700' ");
 
-    const std::string versionStr = std::string("RiftRay version ") + pRiftRayVersion;
-    const std::string varStr = " label='" + versionStr + "' ";
-    TwAddButton(g_pTweakbar, "Version", NULL, NULL, varStr.c_str());
+    TwAddButton(g_pTweakbar, "Disable VSync", DisableVSyncCB, NULL, " group='VSync' ");
+    TwAddButton(g_pTweakbar, "Enable VSync", EnableVSyncCB, NULL, " group='VSync' ");
+    TwAddButton(g_pTweakbar, "Adaptive VSync", AdaptiveVSyncCB, NULL, " group='VSync' ");
 
-    TwAddVarCB(g_pTweakbar, "Display FPS", TW_TYPE_UINT32, NULL, GetDisplayFPS, NULL,
-               " group='Performance' ");
+    TwAddVarCB(g_pTweakbar, "Display FPS", TW_TYPE_UINT32, NULL, GetDisplayFPS, NULL, " group='Performance' ");
+
     TwAddVarRW(g_pTweakbar, "Target FPS", TW_TYPE_INT32, &g_targetFPS,
                " min=45 max=200 group='Performance' ");
+
     TwAddVarRW(g_pTweakbar, "FBO Scale", TW_TYPE_FLOAT, g_app.GetFBOScalePointer(),
                " min=0.05 max=1.0 step=0.005 group='Performance' ");
     TwAddVarRW(g_pTweakbar, "Dynamic FBO Scale", TW_TYPE_BOOLCPP, &g_dynamicallyScaleFBO,
@@ -56,33 +52,17 @@ void InitializeBar()
                " min=0.001 max=1.0 step=0.001 group='Performance' ");
     TwAddVarRW(g_pTweakbar, "FPS Delta Threshold", TW_TYPE_FLOAT, &g_fpsDeltaThreshold,
                " min=0.0 max=100.0 step=1.0 group='Performance' ");
-    TwAddVarRW(g_pTweakbar, "Draw to Aux Window", TW_TYPE_BOOLCPP, &g_drawToAuxWindow,
-               "  group='Performance' ");
     TwAddVarRW(g_pTweakbar, "CinemaScope", TW_TYPE_FLOAT, &g_app.m_cinemaScopeFactor,
                " min=0.0 max=0.95 step=0.005 group='Performance' ");
-
-    TwAddButton(g_pTweakbar, "Disable VSync", DisableVSyncCB, NULL, " group='VSync' ");
-    TwAddButton(g_pTweakbar, "Enable VSync", EnableVSyncCB, NULL, " group='VSync' ");
-    TwAddButton(g_pTweakbar, "Adaptive VSync", AdaptiveVSyncCB, NULL, " group='VSync' ");
 
 
     TwAddButton(g_pTweakbar, "Recenter Pose", RecenterPoseCB, NULL, " group='Position' ");
     TwAddButton(g_pTweakbar, "Standing", StandingCB, NULL, " group='Position' ");
     TwAddButton(g_pTweakbar, "Sitting", SittingCB, NULL, " group='Position' ");
-    TwAddVarRW(g_pTweakbar, "Allow Pitch", TW_TYPE_BOOLCPP, &g_allowPitch, " group='Position' ");
-    TwAddVarRW(g_pTweakbar, "Allow Roll", TW_TYPE_BOOLCPP, &g_allowRoll, " group='Position' ");
 
 
-    TwAddVarRW(g_pTweakbar, "Animated Thumbnails", TW_TYPE_BOOLCPP, &g_app.m_galleryScene.m_globalShadertoyState.animatedThumbnails,
-               "  group='Scene' ");
-    TwAddVarRW(g_pTweakbar, "Panes as Portals", TW_TYPE_BOOLCPP, &g_app.m_galleryScene.m_globalShadertoyState.panesAsPortals,
-               "  group='Scene' ");
-    TwAddVarRW(g_pTweakbar, "Fulldome Projection", TW_TYPE_BOOLCPP, &g_app.m_galleryScene.m_useFulldome,
-               "  group='Scene' ");
-    TwAddVarRW(g_pTweakbar, "Show Controls", TW_TYPE_BOOLCPP, &g_app.m_dashScene.m_pngPane.m_visible,
-               "  group='Scene' ");
 
-    TwAddButton(g_pTweakbar, "Reset Timer", ResetTimerCB, &g_app.m_galleryScene,
+    TwAddButton(g_pTweakbar, "Reset Timer", ResetTimerCB, &g_app.m_shaderToyScene,
         " label='Reset Timer' group='Shader' ");
     TwAddVarRW(g_pTweakbar, "headSize", TW_TYPE_FLOAT, &g_app.m_headSize,
                " label='headSize' precision=4 min=0.0001 step=0.001 group='Shader' ");
@@ -95,7 +75,7 @@ void InitializeBar()
 
 
 
-    TwAddVarRW(g_pTweakbar, "Draw Scene", TW_TYPE_BOOLCPP, &g_app.m_floorScene.m_bDraw,
+    TwAddVarRW(g_pTweakbar, "Draw Scene", TW_TYPE_BOOLCPP, &g_app.m_scene.m_bDraw,
                "  group='Scene' ");
 #ifdef USE_SIXENSE
     TwAddVarRW(g_pTweakbar, "Draw HydraScene", TW_TYPE_BOOLCPP, &g_app.m_hydraScene.m_bDraw,
@@ -107,15 +87,10 @@ void InitializeBar()
     TwAddVarRW(g_pTweakbar, "Hydra Location z", TW_TYPE_FLOAT, &g_app.m_fm.m_baseOffset.z,
                " min=-10 max=10 step=0.05 group='HydraScene' ");
 #endif
-
-#if 0
     TwAddVarRW(g_pTweakbar, "Draw RaymarchScene", TW_TYPE_BOOLCPP, &g_app.m_raymarchScene.m_bDraw,
                "  group='RaymarchScene' ");
-#endif
 
     int opened = 0;
-    TwSetParam(g_pTweakbar, "VSync", "opened", TW_PARAM_INT32, 1, &opened);
-    TwSetParam(g_pTweakbar, "Position", "opened", TW_PARAM_INT32, 1, &opened);
     TwSetParam(g_pTweakbar, "Scene", "opened", TW_PARAM_INT32, 1, &opened);
     TwSetParam(g_pTweakbar, "HydraScene", "opened", TW_PARAM_INT32, 1, &opened);
     TwSetParam(g_pTweakbar, "RaymarchScene", "opened", TW_PARAM_INT32, 1, &opened);

@@ -17,6 +17,7 @@
 
 #include <string>
 #include <map>
+#include <algorithm>
 
 #include "Timer.h"
 

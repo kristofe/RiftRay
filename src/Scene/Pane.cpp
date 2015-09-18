@@ -13,9 +13,6 @@ Pane::Pane()
 , m_paneRenderBuffer()
 , m_cursorInPane(false)
 , m_pointerCoords(0.0f)
-, m_holdState()
-, m_acceptMouseMotion(false)
-, m_visible(true)
 {
     m_panePts.push_back(glm::vec3(-0.5f, -0.5f, 0.0f));
     m_panePts.push_back(glm::vec3(0.5f, -0.5f, 0.0f));
@@ -47,15 +44,15 @@ void Pane::initGL()
 void Pane::_InitPointerAttributes()
 {
     const glm::vec3 verts[] = {
-        glm::vec3(0.f),
-        glm::vec3(.05f, .025f, .0f),
-        glm::vec3(.025f, .05f, .0f),
+        glm::vec3(0.0f),
+        glm::vec3(0.1f, 0.05f, 0.0f),
+        glm::vec3(0.05f, 0.1f, 0.0f),
     };
 
     const glm::vec3 cols[] = {
-        glm::vec3(1.f, 0.f, 0.f),
-        glm::vec3(0.f, 1.f, 0.f),
-        glm::vec3(0.f, 0.f, 1.f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
     };
 
     GLuint vertVbo = 0;
@@ -105,9 +102,6 @@ void Pane::_InitPlaneAttributes()
 
 void Pane::DrawCursor() const
 {
-    if (m_visible == false)
-        return;
-
     if (!m_cursorInPane)
         return;
 
@@ -141,15 +135,11 @@ void Pane::DrawTextOverlay(
     const ShaderWithVariables& sh,
     const BMFont& font) const
 {
-    if (m_visible == false)
-        return;
-
     const glm::mat4 modelview(1.0f);
     const glm::mat4 projection = glm::ortho(
         0.0f,
-        // Text size is tuned to font size and max shader title/author/license length
-        static_cast<float>(600),//m_paneRenderBuffer.w),
-        static_cast<float>(600),//m_paneRenderBuffer.h),
+        static_cast<float>(m_paneRenderBuffer.w),
+        static_cast<float>(m_paneRenderBuffer.h),
         0.0f,
         -1.0f,
         1.0f);
@@ -159,9 +149,6 @@ void Pane::DrawTextOverlay(
 
 void Pane::DrawPane() const
 {
-    if (m_visible == false)
-        return;
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_paneRenderBuffer.tex);
     glUniform1i(m_plane.GetUniLoc("fboTex"), 0);
@@ -175,9 +162,6 @@ void Pane::DrawPane() const
 
 void Pane::DrawToFBO() const
 {
-    if (m_visible == false)
-        return;
-
     if (m_cursorInPane || !m_tx.m_lockedAtClickPos)
         glClearColor(0.25f, 0.25f, 0.25f, 0.0f);
     else
@@ -195,9 +179,6 @@ void Pane::DrawInScene(
     const glm::mat4& projection,
     const glm::mat4& object) const
 {
-    if (m_visible == false)
-        return;
-
     glUseProgram(m_plane.prog());
     {
         const glm::mat4 objectMatrix = modelview * object;
@@ -229,18 +210,12 @@ std::vector<glm::vec3> Pane::GetTransformedPanePoints() const
     return pts;
 }
 
+
 ///@param [out] planePt Intersection point on plane in local normalized coordinates
 ///@return true if ray hits pane quad, false otherwise
-bool Pane::GetPaneRayIntersectionCoordinates(
-    glm::vec3 origin3, ///< [in] Ray origin
-    glm::vec3 dir3, ///< [in] Ray direction(normalized)
-    glm::vec2& planePtOut, ///< [out] Intersection point in XY plane coordinates
-    float& tParamOut) ///< [out] t parameter of ray intersection (ro + t*dt)
+bool Pane::GetPaneRayIntersectionCoordinates(glm::vec3 origin3, glm::vec3 dir3, glm::vec2& planePt)
 {
-    if (m_visible == false)
-        return false;
-
-    const std::vector<glm::vec3> pts = GetTransformedPanePoints();
+    std::vector<glm::vec3> pts = GetTransformedPanePoints();
     glm::vec3 retval1(0.0f);
     glm::vec3 retval2(0.0f);
     const bool hit1 = glm::intersectLineTriangle(origin3, dir3, pts[0], pts[1], pts[2], retval1);
@@ -256,33 +231,35 @@ bool Pane::GetPaneRayIntersectionCoordinates(
         // At this point, retval1 or retval2 contains hit data returned from glm::intersectLineTriangle.
         // This does not appear to be raw - y and z appear to be barycentric coordinates.
         // Fill out the x coord with the barycentric identity then convert using simple weighted sum.
+        hitval.x = 1.0f - hitval.y - hitval.z;
         cartesianpos = 
-            (1.0f - hitval.y - hitval.z) * pts[0] +
+            hitval.x * pts[0] +
             hitval.y * pts[1] +
             hitval.z * pts[2];
     }
     else if (hit2)
     {
         hitval = retval2;
+        hitval.x = 1.0f - hitval.y - hitval.z;
         cartesianpos = 
-            (1.0f - hitval.y - hitval.z) * pts[0] +
+            hitval.x * pts[0] +
             hitval.y * pts[2] +
             hitval.z * pts[3];
     }
 
     // Store the t param along controller ray of the hit in the Transformation
-    // Did you know that x stores the t param val? I couldn't find this in docs anywhere.
-    const float tParam = hitval.x;
-    m_tx.m_controllerTParamAtClick = tParam;
-    tParamOut = tParam;
-    if (tParam < 0.0f)
-        return false; // Behind the origin
+    if (m_tx.m_controllerTParamAtClick <= 0.0f)
+    {
+        const glm::vec3 originToHitPt = cartesianpos - origin3;
+        const float tParam = glm::length(originToHitPt);
+        m_tx.m_controllerTParamAtClick = tParam;
+    }
 
     const glm::vec3 v1 = pts[1] - pts[0]; // x axis
     const glm::vec3 v2 = pts[3] - pts[0]; // y axis
     const float len = glm::length(v1); // v2 length should be equal
     const glm::vec3 vh = (cartesianpos - pts[0]) / len;
-    planePtOut = glm::vec2(
+    planePt = glm::vec2(
                glm::dot(v1/len, vh),
         1.0f - glm::dot(v2/len, vh) // y coord flipped by convention
         );
@@ -292,10 +269,6 @@ bool Pane::GetPaneRayIntersectionCoordinates(
 
 void Pane::OnHmdTap()
 {
-    if (m_visible == false)
-        return;
-
-    const glm::vec2& pc = m_pointerCoords;
-    OnMouseClick(1, static_cast<int>(pc.x), static_cast<int>(pc.y));
-    OnMouseClick(0, static_cast<int>(pc.x), static_cast<int>(pc.y));
+    OnMouseClick(1, m_pointerCoords.x, m_pointerCoords.y);
+    OnMouseClick(0, m_pointerCoords.x, m_pointerCoords.y);
 }

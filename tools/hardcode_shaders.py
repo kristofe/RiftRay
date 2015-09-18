@@ -1,6 +1,5 @@
 # hardcode_shaders.py
 
-from __future__ import print_function
 import sys
 import os
 
@@ -20,22 +19,22 @@ def generateSourceFile():
 
 	# Write a small comment if no shaders directory.
 	if not os.path.isdir(shaderPath):
-		print("Directory", shaderPath, "does not exist.")
+		print "Directory", shaderPath, "does not exist."
 		with open(sourceFileOut,'w') as outStream:
-			print("/* Directory", shaderPath, "does not exist. */", file=outStream,)
+			print >>outStream, "/* Directory", shaderPath, "does not exist. */"
 		return
 
 	# Create autogen/ if it's not there.
 	if not os.path.isdir(autogenDir):
 		os.makedirs(autogenDir)
 
-	print("hardcode_shaders.py writing the following shaders to",autogenDir,":")
+	print "hardcode_shaders.py writing the following shaders to",autogenDir,":"
 	shaderList = os.listdir(shaderPath)
 	# filter out some extraneous results: directories, svn files...
 	shaderList = [s for s in shaderList if s != '.svn']
 	shaderList = [s for s in shaderList if not os.path.isdir(shaderPath + s)]
 	for shaderName in shaderList:
-		print("    hardcoding shader:", shaderName)
+		print "    hardcoding shader:", shaderName
 
 	tab = "    "
 	decl = "const char* "
@@ -43,31 +42,31 @@ def generateSourceFile():
 	quote = "\""
 
 	with open(sourceFileOut,'w') as outStream:
-		print(header, file=outStream)
-		print("#include <map>", file=outStream)
+		print >>outStream, header
+		print >>outStream, "#include <map>"
 		
 		#shaderList = os.listdir(shaderPath)
 		for shaderName in shaderList:
 			file = shaderPath + shaderName
 			lines = open(file).read().splitlines()
 			varname = shaderName.replace(".","_")
-			print("\n" + decl + varname + " = ", file=outStream)
+			print >>outStream, "\n" + decl + varname + " = "
 			for l in lines:
 				if l != "":
 					l = l.replace('"', '\\"')
-					print(tab + quote + l + newline + quote, file=outStream)
-			print(";", file=outStream)
+					print >>outStream, tab + quote + l + newline + quote
+			print >>outStream, ";"
 
 		mapvar = "g_shaderMap"
-		print("\n", file=outStream)
-		print("std::map<std::string, std::string> " + mapvar + ";", file=outStream)
-		print("\n", file=outStream)
+		print >>outStream, "\n"
+		print >>outStream, "std::map<std::string, std::string> " + mapvar + ";"
+		print >>outStream, "\n"
 
-		print("void initShaderList() {", file=outStream)
+		print >>outStream, "void initShaderList() {"
 		for fname in shaderList:
 			varname = fname.replace(".","_")
-			print(tab + mapvar + "[\"" + fname + "\"] = " + varname + ";", file=outStream)
-		print("}", file=outStream)
+			print >>outStream, tab + mapvar + "[\"" + fname + "\"] = " + varname + ";"
+		print >>outStream, "}"
 
 
 #

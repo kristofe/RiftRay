@@ -80,6 +80,8 @@ int getHandArrayIndex(
 FlyingMouse::FlyingMouse()
 : m_active(false)
 , m_baseOffset(0.0f, -0.4f, -0.1f)
+, m_pChassisPos(NULL)
+, m_pChassisYaw(NULL)
 {
 }
 
@@ -240,7 +242,7 @@ void FlyingMouse::GetControllerOriginAndDirection(Hand h, glm::vec3& origin, glm
     const glm::vec4 ori4 = mR * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     const glm::vec4 dir4 = mR * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
 
-    origin = glm::vec3(ori4) + m_baseOffset;
+    origin = glm::vec3(ori4) + m_baseOffset + GetChassisPos();
     direction = glm::normalize(glm::vec3(dir4));
 }
 

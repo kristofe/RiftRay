@@ -8,85 +8,44 @@ Tap the side of the Rift with one finger to dismiss the Health and Safety Warnin
 
 
 ## Features  
-- Floating AntTweakbar pane for live shader parameter editing  
 - Dynamic framebuffer scaling  
-- Vertical FOV adjustment(per developer guide section 8.5.4)  
-- Xbox controller, Gamepad support  
-- Sixense Razer Hydra support  
 - Tracking volume display(on when near the boundary)  
 - Auxiliary window display mirroring  
+- Gamepad support  
+- Sixense Razer Hydra support  
+- Vertical FOV adjustment(per developer guide section 8.5.4)  
 
 
 ## Controls  
 Gamepad and Hydra are supported, but optional. You can get by with only the HMD for input by tapping on it to select a shader in the gallery. To highlight a shader's thumbnail in the gallery, look straight at it or point the right Hydra controller at it.  
 
 #### HMD:  
-- **Tap on Headset** - Enter shader/return to gallery  
+- Tap on Headset - select shader/return to gallery  
 
 #### Keyboard:  
-- **Space** - Recenter view  
-- **Enter** - Enter shader/return to gallery  
-- **Escape** - Quit  
-- **WASD** - Movement  
-- **QE13** - Movement(elevation/yaw)  
-- **Shift/Control** - Slow/fast movement  
-- **PgUp/PgDn** - Open/Close cinemascope(letterbox)  
-- **F5-F8** - Adjust render target size manually  
-- **F9-F11** - VSync Off/On/Adaptive  
-- **Tab** - Toggle Tweakbar pane  
-- **\\(Backslash)** - Click in pane  
-- **/(Slash)** - Reposition pane  
-- **R** - Reset world position  
-- **Print Screen** - Save shader variables to settings directory  
+- Space bar - recenter  
+- Enter - select shader/return to gallery  
+- WASD - movement  
+- QE13 - movement(elevation/yaw)  
+- Shift/Control - slow/fast movement  
 
-#### Mouse:  
-- **Wheel - adjust vertical** - Cinemascope | Letterbox | vFOV  
-- **Middle click** - Toggle Tweakbar pane  
-- **Left click & drag** - Yaw  
-- **Right click & drag** - Movement in horizontal plane  
-- **Middle click & drag** - Movement in vertical plane  
-- **Hold Right click & Left Click** - Enter shader/return to gallery  
-- **Hold Right click & Wheel** - Adjust render target size manually  
+#### Mouse
+- Wheel - adjust vertical FOV
+- Right click & drag - movement in horizontal plane  
+- Left click & drag - yaw  
 
-#### Xbox Controller:  
-- **Start** - Enter shader/return to gallery  
-- **Left analog stick** - Movement  
-- **Right analog stick** - Yaw  
-- **A** - Move up  
-- **B** - Move down  
-- **Y** - Toggle Tweakbar pane  
-- **X** - Click in pane  
-- **Left Bumper** - Recenter view  
-- **Right Bumper** - Reset position  
-- **Left Trigger** - Move quickly  
-- **Right Trigger** - Move slowly  
-- **Dpad** - Resolution, vFOV  
+#### Gamepad:  
+- Right hand buttons - movement  
+- Shoulder buttons - height adjustment/speed boost  
+- "Start" button - select shader/return to gallery  
+- Hold "select" and press Left Shoulder buttons - adjust vertical FOV  
 
-#### Gravis Gamepad Pro:  
-- **Right side buttons** - Movement  
-- **Left Shoulder 1(upper)** - Move quickly/Reposition pane  
-- **Left Shoulder 2(lower)** - Move slowly  
-- **Start** - Enter shader  
-- **Select** - Toggle Tweakbar pane  
-- **Right Shoulder 1(upper)** - Click in pane  
-
-#### Razer Hydra:  
-- **Right Controller translation/rotation** - Select shader, pointer in pane  
-- **Right Stick** - Movement(press in for vertical plane)  
-- **Right Trigger** - Move quickly  
-- **Right Start Button** - Enter shader/return to gallery  
-- **Right Bumper** - Toggle Tweakbar pane  
-- **Right Button 1** - Click in pane  
-- **Right Button 2** - Reposition pane  
-- **Left Stick** - Resolution, vFOV  
-
-## Related work
-  - [Shadertoy VR](http://www.reddit.com/r/oculus/comments/2q0ard/new_build_of_shadertoy_vr/) - Qt-enabled shader editing in VR  
-    - Part of Brad Davis(jherico)'s [Oculus Rift in Action]()
-  - [boxplorer2](https://code.google.com/p/boxplorer2/) - Marius Schilder  
-  - [Fragmentarium](http://syntopia.github.io/Fragmentarium/) - native cross-platform shader IDE
-  - [GLSL Sandbox](http://glslsandbox.com/) - web app, similar to Shadertoy
-  - [Synthclipse](http://synthclipse.sourceforge.net/user_guide/shadertoy.html) - plugin for Eclipse
+#### Hydra:  
+- Right stick - movement  
+  - Press in and move stick for vertical movement
+- Trigger - speed boost  
+- Start button - select shader/return to gallery  
+- Left trigger - adjust vertical FOV  
 
 
 ## Acknowledgments
